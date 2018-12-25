@@ -6,9 +6,9 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Button
+  Button,
+  AsyncStorage
 } from "react-native";
-import Touchable from "react-native-platform-touchable";
 
 export default class SettingsScreen extends React.Component {
   static navigationOptions = {
@@ -17,9 +17,14 @@ export default class SettingsScreen extends React.Component {
 
   handleProfile = () => {
     const { navigate } = this.props.navigation;
-    console.log("navigate", navigate);
-    
-    return navigate("Profile", {name: "Hello"});
+    return navigate("Profile", { name: "Hello" });
+  };
+
+  handleLogout = () => {
+    const { navigate } = this.props.navigation;
+    AsyncStorage.clear().then(() => {
+      navigate("Login");
+    });
   };
 
   render() {
@@ -30,7 +35,7 @@ export default class SettingsScreen extends React.Component {
             <Text>My Profile</Text>
           </View>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.list}>
+        <TouchableOpacity style={styles.list} onPress={this.handleLogout}>
           <View style={{ flexDirection: "row" }}>
             <Text>Log Out</Text>
           </View>

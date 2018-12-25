@@ -1,4 +1,5 @@
-let firebase = require("firebase");
+import firebase from "firebase";
+require("firebase/firestore");
 let configJSON = require("./firebase-config.json");
 
 let config = {
@@ -11,7 +12,13 @@ let config = {
 };
 
 if (!firebase.apps.length) {
-    console.log("I am here");
-    
-    firebase.initializeApp(config);
+  firebase.initializeApp(config);
 }
+
+const db = firebase.firestore();
+
+db.settings({
+  timestampsInSnapshots: true
+});
+
+module.exports = { db };
