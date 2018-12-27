@@ -8,11 +8,11 @@ import {
   StyleSheet,
   AsyncStorage
 } from "react-native";
-import Expo from "expo";
-import {db} from "./../firebase/firebase";
+import * as Expo from "expo";
+import { db } from "./../firebase/firebase";
 let configJSON = require("./../config.json");
 import firebase from "firebase";
-require("firebase/firestore")
+require("firebase/firestore");
 
 let userDetails = firebase.auth().onAuthStateChanged(user => {
   if (user !== null) {
@@ -24,6 +24,16 @@ let userDetails = firebase.auth().onAuthStateChanged(user => {
 
 function loginWithGoogle(token) {
   const credential = firebase.auth.GoogleAuthProvider.credential(null, token);
+  return firebase
+    .auth()
+    .signInAndRetrieveDataWithCredential(credential)
+    .catch(error => {
+      return error;
+    });
+}
+
+function loginWithFacebook(token) {
+  const credential = firebase.auth.FacebookAuthProvider.credential(token);
   console.log("Credential", credential);
 
   return firebase
@@ -45,15 +55,14 @@ export default class LoginScreen extends React.Component {
     })
       .then(result => {
         if (result.type === "success") {
-          console.log("Result", result);
           loginWithGoogle(result.accessToken)
             .then(firebaseResult => {
               console.log("Firebase 2 Result", firebaseResult);
               if (userDetails() !== null) {
-                console.log("User object", result);
                 const { email, familyName, givenName, photoUrl } = result.user;
 
-                db.collection("users").doc(firebaseResult.user.uid)
+                db.collection("users")
+                  .doc(firebaseResult.user.uid)
                   .set({
                     email: email,
                     lastName: givenName,
@@ -85,10 +94,32 @@ export default class LoginScreen extends React.Component {
       });
   };
 
+  handleFacebook = () => {
+    Expo.Facebook.logInWithReadPermissionsAsync(configJSON.facebookAppId, {
+      permissions: ["public_profile"]
+    })
+      .then(result => {
+        if (result.type === "success") {
+          fetch(`https://graph.facebook.com/me?access_token=${result.token}`)
+            .then(response => {
+              loginWithFacebook(result.token).then(facebookResult => {
+                console.log("FB Init Response", response);
+                console.log("FB Final Response", facebookResult);
+              });
+            })
+            .catch(e => alert(`Could not Fetch Data: ${e}`));
+        } else {
+          return { cancelled: true };
+        }
+      })
+      .catch(({ message }) => alert(`Facebook Login Error: ${message}`));
+  };
+
   render() {
     return (
       <View style={styles.container}>
         <Button onPress={this.handleGooglePlus} title="Google Plus Login" />
+        <Button onPress={this.handleFacebook} title="Facebook Login" />
       </View>
     );
   }
